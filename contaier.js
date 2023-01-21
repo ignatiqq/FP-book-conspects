@@ -62,6 +62,9 @@ class Maybe {
         return this.isNothing() ? this : Maybe.of(fn(this.$value));
     }
 
+    join() {
+        return this.isNothing() ? Maybe.of(null) : this.$value;
+    }
 }
 
 const match = curry((x, y) => y.match(x));
@@ -178,11 +181,17 @@ class IO {
         // this.$value = () => pseudoWindow
         // fn = win => win.innerWidth
         // () => pseudoWindow => (win) => win.innerWidth
+
+        // | x => x[0] => | x => new IO(() => x) | () => fs.readFileSync(filename, 'utf-8')
       return new IO(pipe(fn, this.$value));
     }
 
     UNSAFEPerformIO() {
         return this.$value();
+    }
+
+    join() {
+        return this.UNSAFEPerformIO();
     }
   
     // inspect() {
@@ -222,6 +231,8 @@ const findParam = key => fMap(pipe(Maybe.of, find(pipe(equal(key), head)), param
 
 /// exports
 
+const fJoin = (f) => f.join();
+
 module.exports = {
     IO,
     Maybe,
@@ -235,4 +246,7 @@ module.exports = {
     pipe,
     add,
     trace,
+    fJoin,
 }
+
+t.prototype.chain = function(f) { return this.map(f).join(); }
